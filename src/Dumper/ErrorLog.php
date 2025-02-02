@@ -12,7 +12,7 @@ readonly class ErrorLog implements AddInterface
 {
     public function __construct(
         public Level   $log_level = Level::INFO,
-        public bool    $print_data = false,
+        public bool    $print_context = true,
         public bool    $print_trace = false,
         public ?string $timezone = null,
         public string  $date_format = "Y-m-d H:i:s.u",
@@ -48,14 +48,14 @@ readonly class ErrorLog implements AddInterface
         $level   = $action->level->name;
         $message = ["$time $action->module::[$level] $action->message"];
 
-        if ($this->print_data && count($action->context)) {
-            $message[] = "data:";
+        if ($this->print_context && count($action->context)) {
+            $message[] = "  data:";
             $message[] = substr(print_r($action->context, true), 8, -3);
         }
 
         if ($this->print_trace) {
             $indent    = str_repeat(" ", 4) . "- ";
-            $message[] = "trace:";
+            $message[] = "  trace:";
             $message[] =
                 $indent . implode("\n$indent",
                     array_map(

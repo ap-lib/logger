@@ -2,9 +2,6 @@
 
 namespace AP\Logger;
 
-
-use AP\Logger\Context\Format\ExceptionFormat;
-
 class Log
 {
     private const string DEFAULT_MODULE_NAME = 'app';
@@ -20,7 +17,6 @@ class Log
     {
         if (is_null(self::$default)) {
             self::$default = new Router(self::DEFAULT_MODULE_NAME);
-            self::$default->appendFormatter(new ExceptionFormat());
         }
         return self::$default;
     }

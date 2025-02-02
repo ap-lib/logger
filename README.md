@@ -170,7 +170,7 @@ if(IS_PROD){
     Log::router()->setDefaultDumper(
         new ErrorLog(
             log_level: Level::DEBUG,
-            print_data: true,
+            print_context: true,
             print_trace: true,
             timezone: "pst"
         )
@@ -179,3 +179,98 @@ if(IS_PROD){
 ```
 
 If you need to route logs to different dumpers based on log levels, you can implement a routing dumper.
+
+
+### Exceptions normalizer included by default
+
+```php
+use AP\Logger\Log;
+
+function test1()
+{
+    try {
+        throw new RuntimeException("hello exception");
+    } catch (Throwable $e) {
+        Log::error("error", context: $e);
+    }
+}
+
+function test2()
+{
+    try {
+        throw new RuntimeException("hello exception");
+    } catch (Throwable $e) {
+        Log::error("error", context: [
+            "place"     => "test2",
+            "exception" => $e,
+        ]);
+    }
+}
+
+function main()
+{
+    test1();
+    test2();
+}
+
+
+main();
+```
+
+result:
+```bash
+php /code/readme_example_exception.php
+
+2025-02-02 06:34:06.442773 app::[ERROR] error
+  data:
+    [message] => hello exception
+    [file] => /code/readme_example_exception.php
+    [line] => 10
+    [code] => 0
+    [trace] => Array
+        (
+            [0] => Array
+                (
+                    [file] => /code/readme_example_exception.php
+                    [line] => 30
+                    [function] => test1
+                )
+
+            [1] => Array
+                (
+                    [file] => /code/readme_example_exception.php
+                    [line] => 34
+                    [function] => main
+                )
+
+        )
+
+2025-02-02 06:34:06.442855 app::[ERROR] error
+  data:
+    [place] => test2
+    [exception] => Array
+        (
+            [message] => hello exception
+            [file] => /code/readme_example_exception.php
+            [line] => 19
+            [code] => 0
+            [trace] => Array
+                (
+                    [0] => Array
+                        (
+                            [file] => /code/readme_example_exception.php
+                            [line] => 31
+                            [function] => test2
+                        )
+
+                    [1] => Array
+                        (
+                            [file] => /code/readme_example_exception.php
+                            [line] => 34
+                            [function] => main
+                        )
+
+                )
+
+        )
+```

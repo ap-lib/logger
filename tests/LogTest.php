@@ -3,13 +3,13 @@
 namespace AP\Logger\Tests;
 
 use AP\Logger\Action;
-use AP\Logger\Context\Format\ExceptionFormat;
 use AP\Logger\Level;
 use AP\Logger\Log;
 use AP\Logger\Tests\Helpers\ActionSerializer;
 use AP\Logger\Tests\Helpers\ExampleDumper;
 use AP\Logger\Tests\Helpers\MyLog;
 use AP\Logger\Tests\Helpers\PrintSerializeDumper;
+use AP\Normalizer\ThrowableNormalizer;
 use Exception;
 use PHPUnit\Framework\TestCase;
 
@@ -278,8 +278,39 @@ final class LogTest extends TestCase
         try {
             throw new Exception("test exception");
         } catch (Exception $e) {
-            $expected_output = json_encode(ExceptionFormat::f($e));
+            $expected_output = json_encode((new ThrowableNormalizer())->normalizeThrowable($e));
             Log::error("error", context: $e);
+        }
+
+        Log::router()->commitAll();
+        $res = ob_get_clean();
+
+        $this->assertEquals($expected_output, $res);
+    }
+
+    public function testExceptionRecursiveFormatter()
+    {
+        // clear log
+        Log::router()->commitAll();
+        Log::router()->setDefaultDumper(new PrintSerializeDumper(
+            actionRender: function (Action $action) {
+                return json_encode($action->context);
+            },
+            batchSeparator: ""
+        ));
+        ob_start();
+
+        try {
+            throw new Exception("test exception");
+        } catch (Exception $e) {
+            $expected_output = json_encode([
+                "user_id"   => 13,
+                "exception" => (new ThrowableNormalizer())->normalizeThrowable($e)
+            ]);
+            Log::error("error", context: [
+                "user_id"   => 13,
+                "exception" => $e
+            ]);
         }
 
         Log::router()->commitAll();

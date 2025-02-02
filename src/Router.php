@@ -2,8 +2,10 @@
 
 namespace AP\Logger;
 
-use AP\Logger\Context\Format\FormatInterface;
 use AP\Logger\Dumper\AddInterface;
+use AP\Normalizer\BaseNormalizer;
+use AP\Normalizer\Normalized;
+use AP\Normalizer\ThrowableNormalizer;
 
 class Router
 {
@@ -13,16 +15,16 @@ class Router
      */
     protected array $specialLoggers = [];
 
-    /**
-     * @var array<FormatInterface>
-     */
-    protected array $formatters;
+    protected BaseNormalizer $contextNormalizer;
 
     /**
      * @param string $defaultModuleName
      */
     public function __construct(readonly protected string $defaultModuleName)
     {
+        $this->contextNormalizer = new BaseNormalizer([
+            new ThrowableNormalizer
+        ]);
     }
 
     final public function setSpecialDumper(string $module, AddInterface $dumper): static
@@ -45,38 +47,9 @@ class Router
         return $this;
     }
 
-    final public function commitAll(): void
+    final public function getContextNormalizer(): BaseNormalizer
     {
-        if ($this->defaultLogger instanceof Logger) {
-            $this->defaultLogger->commit();
-        }
-        foreach ($this->specialLoggers as $logger) {
-            $logger->commit();
-        }
-    }
-
-    /**
-     * Adds a formatter to the list of formatters.
-     *
-     * @param FormatInterface $formatter
-     * @return static
-     */
-    final public function appendFormatter(FormatInterface $formatter): static
-    {
-        $this->formatters[] = $formatter;
-        return $this;
-    }
-
-    /**
-     * Prepends a formatter to the list, ensuring it is applied first.
-     *
-     * @param FormatInterface $formatter
-     * @return static
-     */
-    final public function prependFormatter(FormatInterface $formatter): static
-    {
-        $this->formatters = array_merge([$formatter], $this->formatters);
-        return $this;
+        return $this->contextNormalizer;
     }
 
     /**
@@ -100,18 +73,25 @@ class Router
 
     public function add(Level $level, string $message, mixed $context, ?string $module): void
     {
-        foreach ($this->formatters as $formatter) {
-            $temp = $formatter->format($context);
-            if (is_array($temp)) {
-                $context = $temp;
-            }
-        }
-        $module = is_null($module) ? $this->defaultModuleName : $module;
+        $module  = is_null($module) ? $this->defaultModuleName : $module;
+        $context = $this->contextNormalizer->normalize($context);
+        $context = $context instanceof Normalized ? $context->value : [];
+
         self::getLogger($module)->add(
             $level,
             $message,
             is_array($context) ? $context : [],
             $module,
         );
+    }
+
+    final public function commitAll(): void
+    {
+        if ($this->defaultLogger instanceof Logger) {
+            $this->defaultLogger->commit();
+        }
+        foreach ($this->specialLoggers as $logger) {
+            $logger->commit();
+        }
     }
 }
