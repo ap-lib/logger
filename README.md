@@ -124,7 +124,7 @@ class MyLogDumper implements AddInterface, CommitInterface
 ```php
 use AP\Logger\Log;
 
-Log::setDefaultDumper(new MyLogDumper(
+Log::router()->setDefaultDumper(new MyLogDumper(
     filename: "logs.txt",
     batch_limit: 5
 ));
@@ -163,11 +163,11 @@ use AP\Logger\Log;
 
 
 if(IS_PROD){
-    Log::setDefaultDumper(new MyLogDumper());
+    Log::router()->setDefaultDumper(new MyLogDumper());
 
 } else {
     // Set a default dumper with customizable settings
-    Log::setDefaultDumper(
+    Log::router()->setDefaultDumper(
         new ErrorLog(
             log_level: Level::DEBUG,
             print_data: true,
