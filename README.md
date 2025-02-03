@@ -247,56 +247,23 @@ result:
 ```bash
 php /code/readme_example_exception.php
 
-2025-02-02 06:34:06.442773 app::[ERROR] error
+2025-02-03 22:32:31.657456 app::[ERROR] error
   data:
+    [type] => RuntimeException
     [message] => hello exception
     [file] => /code/readme_example_exception.php
     [line] => 10
     [code] => 0
-    [trace] => Array
-        (
-            [0] => Array
-                (
-                    [file] => /code/readme_example_exception.php
-                    [line] => 30
-                    [function] => test1
-                )
-
-            [1] => Array
-                (
-                    [file] => /code/readme_example_exception.php
-                    [line] => 34
-                    [function] => main
-                )
-
-        )
-
-2025-02-02 06:34:06.442855 app::[ERROR] error
+    
+2025-02-03 22:32:31.657527 app::[ERROR] error
   data:
     [place] => test2
     [exception] => Array
         (
+            [type] => RuntimeException
             [message] => hello exception
             [file] => /code/readme_example_exception.php
             [line] => 19
             [code] => 0
-            [trace] => Array
-                (
-                    [0] => Array
-                        (
-                            [file] => /code/readme_example_exception.php
-                            [line] => 31
-                            [function] => test2
-                        )
-
-                    [1] => Array
-                        (
-                            [file] => /code/readme_example_exception.php
-                            [line] => 34
-                            [function] => main
-                        )
-
-                )
-
         )
 ```
