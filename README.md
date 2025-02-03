@@ -153,29 +153,55 @@ logs.txt file will include:
 1738367282.3244 [INFO] hello 7
 ```
 
-### Use different dumpers for production and development environments
+### Lazy load and use different dumpers for production and development environments
 
 By default, error log output no included: debug info, trace and additional info
 It is good practice to set up different log dumper for dev and production environment
 
+
+Using Boot helpers is a good approach:
 ```php
+use AP\Logger\Dumper\ErrorLog;
+use AP\Logger\Level;
 use AP\Logger\Log;
+use AP\Logger\Router;
 
+class Boot
+{
+    public static function isProduction(): bool
+    {
+        return false;
+    }
 
-if(IS_PROD){
-    Log::router()->setDefaultDumper(new MyLogDumper());
+    public static function initLog(Router $router)
+    {
+        if (self::isProduction()) {
+            $router->setDefaultDumper(new MyLogDumper());
+        } else {
+            $router->setDefaultDumper(
+                new ErrorLog(
+                    log_level: Level::DEBUG,
+                    print_context: true,
+                    print_trace: true,
+                    timezone: "pst"
+                )
+            );
+        }
+    }
 
-} else {
-    // Set a default dumper with customizable settings
-    Log::router()->setDefaultDumper(
-        new ErrorLog(
-            log_level: Level::DEBUG,
-            print_context: true,
-            print_trace: true,
-            timezone: "pst"
-        )
-    );
+    public static function initCore()
+    {
+        // Set up lazy initialization for the router, it'll initialize only if used
+        Log::routerLazyInit([self::class, "initLog"]);
+    }
 }
+```
+
+Use it to pre-initialize the environment 
+```php
+Boot::initCore();
+
+Log::info("hello world");
 ```
 
 If you need to route logs to different dumpers based on log levels, you can implement a routing dumper.

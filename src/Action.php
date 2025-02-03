@@ -2,12 +2,23 @@
 
 namespace AP\Logger;
 
+/**
+ * Represents a logging action with metadata such as level, message, context, and backtrace
+ */
 readonly class Action
 {
     public float $microtime;
     public array $context;
     public array $backtrace;
 
+    /**
+     * Creates a new Action instance
+     *
+     * @param Level $level Logging severity level
+     * @param string $message Log message
+     * @param array $context Additional contextual data
+     * @param string $module Module name where the log event occurred
+     */
     public function __construct(
         public Level  $level,
         public string $message,
@@ -20,6 +31,15 @@ readonly class Action
         $this->microtime = microtime(true);
     }
 
+    /**
+     * Sanitizes the provided context by removing unsupported data types
+     *
+     * Only integers, booleans, floats, and strings are allowed.
+     * Nested arrays are processed recursively.
+     *
+     * @param array $context Context data to be sanitized
+     * @return array Sanitized context data
+     */
     private static function sanitizeContext(array $context): array
     {
         foreach ($context as $key => $value) {
