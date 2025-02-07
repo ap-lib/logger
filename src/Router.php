@@ -3,10 +3,10 @@
 namespace AP\Logger;
 
 use AP\Logger\Dumper\AddInterface;
-use AP\Normalizer\BaseNormalizer;
-use AP\Normalizer\Normalized;
-use AP\Normalizer\Normalizer;
-use AP\Normalizer\ThrowableNormalizer;
+use AP\Sanitizer\BaseSanitizer;
+use AP\Sanitizer\Sanitized;
+use AP\Sanitizer\Sanitizer;
+use AP\Sanitizer\ThrowableSanitizer;
 
 /**
  * Routes log messages to the appropriate logger
@@ -22,7 +22,7 @@ class Router
      */
     protected array $specialLoggers = [];
 
-    protected ?Normalizer $contextNormalizer = null;
+    protected ?Sanitizer $contextSanitizer = null;
 
     /**
      * @param string $defaultModuleName
@@ -86,30 +86,30 @@ class Router
     }
 
     /**
-     * Sets a custom context normalizer
+     * Sets a custom context sanitizer
      *
-     * @param Normalizer $contextNormalizer Normalizer instance for processing context data
+     * @param Sanitizer $contextSanitizer Sanitizer instance for processing context data
      * @return static
      */
-    public function setContextNormalizer(Normalizer $contextNormalizer): static
+    public function setContextSanitizer(Sanitizer $contextSanitizer): static
     {
-        $this->contextNormalizer = $contextNormalizer;
+        $this->contextSanitizer = $contextSanitizer;
         return $this;
     }
 
     /**
-     * Returns the context normalizer, creating a default with [ThrowableNormalizer] one if none is set
+     * Returns the context sanitizer, creating a default with [ThrowableSanitizer] one if none is set
      *
-     * @return Normalizer
+     * @return Sanitizer
      */
-    final public function getContextNormalizer(): Normalizer
+    final public function getContextSanitizer(): Sanitizer
     {
-        if (is_null($this->contextNormalizer)) {
-            $this->contextNormalizer = new BaseNormalizer([
-                new ThrowableNormalizer
+        if (is_null($this->contextSanitizer)) {
+            $this->contextSanitizer = new BaseSanitizer([
+                new ThrowableSanitizer()
             ]);
         }
-        return $this->contextNormalizer;
+        return $this->contextSanitizer;
     }
 
     /**
@@ -123,8 +123,8 @@ class Router
     public function add(Level $level, string $message, mixed $context, ?string $module): void
     {
         $module  = is_null($module) ? $this->defaultModuleName : $module;
-        $context = $this->getContextNormalizer()->normalize($context);
-        $context = $context instanceof Normalized ? $context->value : [];
+        $context = $this->getContextSanitizer()->sanitize($context);
+        $context = $context instanceof Sanitized ? $context->value : [];
 
         self::getLogger($module)->add(
             $level,

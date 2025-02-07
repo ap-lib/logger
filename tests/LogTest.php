@@ -9,7 +9,7 @@ use AP\Logger\Tests\Helpers\ActionSerializer;
 use AP\Logger\Tests\Helpers\ExampleDumper;
 use AP\Logger\Tests\Helpers\MyLog;
 use AP\Logger\Tests\Helpers\PrintSerializeDumper;
-use AP\Normalizer\ThrowableNormalizer;
+use AP\Sanitizer\ThrowableSanitizer;
 use Exception;
 use PHPUnit\Framework\TestCase;
 
@@ -278,7 +278,7 @@ final class LogTest extends TestCase
         try {
             throw new Exception("test exception");
         } catch (Exception $e) {
-            $expected_output = json_encode((new ThrowableNormalizer())->normalizeThrowable($e));
+            $expected_output = json_encode((new ThrowableSanitizer())->sanitizeThrowable($e));
             Log::error("error", context: $e);
         }
 
@@ -305,7 +305,7 @@ final class LogTest extends TestCase
         } catch (Exception $e) {
             $expected_output = json_encode([
                 "user_id"   => 13,
-                "exception" => (new ThrowableNormalizer())->normalizeThrowable($e)
+                "exception" => (new ThrowableSanitizer())->sanitizeThrowable($e)
             ]);
             Log::error("error", context: [
                 "user_id"   => 13,
