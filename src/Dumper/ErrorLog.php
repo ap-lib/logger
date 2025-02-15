@@ -4,6 +4,7 @@ namespace AP\Logger\Dumper;
 
 use AP\Logger\Action;
 use AP\Logger\Level;
+use Closure;
 use DateTime;
 use DateTimeZone;
 use Throwable;
@@ -23,18 +24,21 @@ readonly class ErrorLog implements AddInterface
     /**
      * Initializes the ErrorLog instance with optional configurations
      *
-     * @param Level   $log_level     Minimum log level required for a message to be logged
-     * @param bool    $print_context Whether to include context data in the log output
-     * @param bool    $print_trace   Whether to include stack trace information in the log output
-     * @param string|null $timezone  Timezone for formatting log timestamps
-     * @param string  $date_format   Format for displaying timestamps
+     * @param Level $log_level Minimum log level required for a message to be logged
+     * @param bool $print_context Whether to include context data in the log output
+     * @param bool $print_trace Whether to include stack trace information in the log output
+     * @param string|null $timezone Timezone for formatting log timestamps
+     * @param string $date_format Format for displaying timestamps
+     * @param ?Closure $message_decorator A closure to modify the log message output
+     *                                     Function signature: function(AP\Logger\Action $action): string
      */
     public function __construct(
-        public Level   $log_level = Level::INFO,
-        public bool    $print_context = true,
-        public bool    $print_trace = false,
-        public ?string $timezone = null,
-        public string  $date_format = "Y-m-d H:i:s.u",
+        public Level    $log_level = Level::INFO,
+        public bool     $print_context = true,
+        public bool     $print_trace = false,
+        public ?string  $timezone = null,
+        public string   $date_format = "Y-m-d H:i:s.u",
+        public ?Closure $message_decorator = null,
     )
     {
     }
@@ -74,7 +78,11 @@ readonly class ErrorLog implements AddInterface
     {
         $time    = $this->formatTime($action->microtime);
         $level   = $action->level->name;
-        $message = ["$time $action->module::[$level] $action->message"];
+        $message = $action->message;
+        if ($this->message_decorator) {
+            $message = (string)($this->message_decorator)($action);
+        }
+        $message = ["$time $action->module::[$level] $message"];
 
         if ($this->print_context && count($action->context)) {
             $message[] = "  data:";
