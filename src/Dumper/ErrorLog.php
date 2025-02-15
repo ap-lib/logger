@@ -29,16 +29,16 @@ readonly class ErrorLog implements AddInterface
      * @param bool $print_trace Whether to include stack trace information in the log output
      * @param string|null $timezone Timezone for formatting log timestamps
      * @param string $date_format Format for displaying timestamps
-     * @param ?Closure $message_decorator A closure to modify the log message output
+     * @param ?Closure|string|array $message_decorator Callable to modify the log message output
      *                                     Function signature: function(AP\Logger\Action $action): string
      */
     public function __construct(
-        public Level    $log_level = Level::INFO,
-        public bool     $print_context = true,
-        public bool     $print_trace = false,
-        public ?string  $timezone = null,
-        public string   $date_format = "Y-m-d H:i:s.u",
-        public ?Closure $message_decorator = null,
+        public Level                     $log_level = Level::INFO,
+        public bool                      $print_context = true,
+        public bool                      $print_trace = false,
+        public ?string                   $timezone = null,
+        public string                    $date_format = "Y-m-d H:i:s.u",
+        public null|Closure|string|array $message_decorator = null,
     )
     {
     }
@@ -79,7 +79,7 @@ readonly class ErrorLog implements AddInterface
         $time    = $this->formatTime($action->microtime);
         $level   = $action->level->name;
         $message = $action->message;
-        if ($this->message_decorator) {
+        if (is_callable($this->message_decorator)) {
             $message = (string)($this->message_decorator)($action);
         }
         $message = ["$time $action->module::[$level] $message"];
